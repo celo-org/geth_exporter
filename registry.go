@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
@@ -59,18 +60,20 @@ func (r *registry) buildMetricFamily(name string, stringValue string) (*dto.Metr
 		return nil, err
 	}
 
-	labelPairs := make([]*dto.LabelPair, 0)
-	m := &dto.Metric{
-		Label:   labelPairs,
-		Untyped: &dto.Untyped{Value: proto.Float64(value)},
+	metricFamily := &dto.MetricFamily{}
+	m := &dto.Metric{}
+	m.Label = make([]*dto.LabelPair, 0)
+
+	if strings.HasSuffix(name, "_overall") {
+		m.Counter = &dto.Counter{Value: proto.Float64(value)}
+		metricFamily.Type = dto.MetricType_COUNTER.Enum()
+	} else {
+		m.Gauge = &dto.Gauge{Value: proto.Float64(value)}
+		metricFamily.Type = dto.MetricType_GAUGE.Enum()
 	}
 
-	name = fmt.Sprintf("%s_%s", namespace, name)
-
-	metricFamily := &dto.MetricFamily{}
-	metricFamily.Name = proto.String(name)
-	metricFamily.Help = proto.String("metric exported from geth with debug.metrics")
-	metricFamily.Type = dto.MetricType_UNTYPED.Enum()
+	metricFamily.Name = proto.String(fmt.Sprintf("%s_%s", namespace, name))
+	metricFamily.Help = proto.String("")
 	metricFamily.Metric = []*dto.Metric{m}
 
 	return metricFamily, nil
