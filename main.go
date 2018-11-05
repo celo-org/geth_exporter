@@ -9,13 +9,15 @@ import (
 )
 
 const (
-	metricsPath = "/metrics"
+	metricsPath         = "/metrics"
+	filteredMetricsPath = "/filteredmetrics"
 )
 
 var (
 	ipcPathFlag = flag.String("ipc", "", "path to ipc file")
 	hostFlag    = flag.String("host", "", "http server host")
 	portFlag    = flag.Int("port", 9200, "http server port")
+	filterFlag  = flag.String("filter", "", "regex filters")
 )
 
 func usage() {
@@ -44,9 +46,13 @@ func parseFlags() {
 func main() {
 	parseFlags()
 
-	http.HandleFunc(metricsPath, metricsHandler(*ipcPathFlag))
+	http.HandleFunc(metricsPath, metricsHandler(*ipcPathFlag, ""))
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/", rootHandler)
+
+	if *filterFlag != "" {
+		http.HandleFunc(filteredMetricsPath, metricsHandler(*ipcPathFlag, *filterFlag))
+	}
 
 	listenAddress := fmt.Sprintf("%s:%d", *hostFlag, *portFlag)
 
