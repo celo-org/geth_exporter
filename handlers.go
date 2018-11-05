@@ -34,9 +34,13 @@ func writeBody(w io.Writer, body string) {
 	}
 }
 
-func metricsHandler(ipcPath string) http.HandlerFunc {
+func metricsHandler(ipcPath string, defaultFilter string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		filters := r.URL.Query()["collect[]"]
+		if defaultFilter != "" {
+			filters = append(filters, defaultFilter)
+		}
+
 		registry := newRegistry(ipcPath, filters)
 		gatherers := prometheus.Gatherers{
 			registry,
