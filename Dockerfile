@@ -11,7 +11,7 @@ WORKDIR ${WORKDIR}
 RUN make setup && make
 
 # Copy the binary to the second image
-FROM alpine:latest
+FROM alpine:3
 
 RUN apk add --no-cache ca-certificates bash
 
